@@ -59,10 +59,6 @@ texture = ExtResource("6_bayqr")
 expand_mode = 1
 stretch_mode = 5
 
-[node name="AudioStreamPlayer" type="AudioStreamPlayer" parent="."]
-unique_name_in_owner = true
-stream = ExtResource("7_1fga6")
-
 [node name="VBoxContainer" type="VBoxContainer" parent="."]
 clip_contents = true
 layout_mode = 1
@@ -70,10 +66,10 @@ anchors_preset = -1
 anchor_left = 0.75
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -360.32007
-offset_top = 440.0
-offset_right = -176.0
-offset_bottom = -509.0
+offset_left = -421.0
+offset_top = 124.0
+offset_right = -114.0
+offset_bottom = -118.0
 focus_mode = 3
 mouse_filter = 0
 
@@ -81,6 +77,24 @@ mouse_filter = 0
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
+size_flags_vertical = 6
 bbcode_enabled = true
-text = "Hello World"
+text = "Hello World 
+"
 fit_content = true
+
+[node name="ActionButtonsVBoxContainer" type="VBoxContainer" parent="VBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="Button" type="Button" parent="VBoxContainer/ActionButtonsVBoxContainer"]
+layout_mode = 2
+text = "test1"
+
+[node name="Button2" type="Button" parent="VBoxContainer/ActionButtonsVBoxContainer"]
+layout_mode = 2
+text = "test2"
+
+[node name="AudioStreamPlayer" type="AudioStreamPlayer" parent="."]
+unique_name_in_owner = true
+stream = ExtResource("7_1fga6")
