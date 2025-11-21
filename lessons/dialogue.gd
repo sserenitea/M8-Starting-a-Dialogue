@@ -56,7 +56,25 @@ var dialogue_items: Array[Dictionary] = [
 @onready var action_buttons_v_box_container: VBoxContainer = %ActionButtonsVBoxContainer
 
 
+func create_buttons(choices_data: Dictionary) -> void:
+	for button in action_buttons_v_box_container.get_children():
+		button.queue_free()
+	for choice_text in choices_data:
+		var button := Button.new()
+		action_buttons_v_box_container.add_child(button)
+		button.text = choice_text
+		var target_line_idx: int = choices_data[choice_text]
+		if target_line_idx == -1:
+			button.pressed.connect(get_tree().quit)
+		else:
+			button.pressed.connect(show_text.bind(target_line_idx))
+
+
 func _ready() -> void:
+	create_buttons({
+		"yes": 1, 
+		"no": 2,
+	})
 	show_text(0)
 
 func show_text(current_item_index:int) -> void:
