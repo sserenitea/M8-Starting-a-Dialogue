@@ -1,54 +1,11 @@
+@tool
+@icon("res://assets/dialogue_scene_icon.svg")
+
 extends Control
 
-var expressions := {
-	"happy": preload ("res://assets/emotion_happy.png"),
-	"regular": preload ("res://assets/emotion_regular.png"),
-	"sad": preload ("res://assets/emotion_sad.png"),
-}
-
-var bodies := {
-	"sophia": preload ("res://assets/sophia.png"),
-	"pink": preload ("res://assets/pink.png")
-}
-
-var dialogue_items: Array[Dictionary] = [
-	{
-		"expression": expressions["regular"],
-		"text": "I've been learning about [wave]Arrays and Dictionaries[/wave]",
-		"character": bodies["sophia"]
-	},
-	{
-		"expression": expressions["regular"],
-		"text": "How has it been going?",
-		"character": bodies["pink"]
-	},
-	{
-		"expression": expressions["sad"],
-		"text": "... Well... it is a little bit [shake]complicated[/shake]!",
-		"character": bodies["sophia"]
-	},
-	{
-		"expression": expressions["sad"],
-		"text": "Oh!",
-		"character": bodies["pink"]
-	},
-	{
-		"expression": expressions["regular"],
-		"text": "I believe in you!",
-		"character": bodies["pink"]
-	},
-	{
-		"expression": expressions["happy"],
-		"text": "If you stick to it, you'll eventually make it!",
-		"character": bodies["pink"]
-	},
-	{
-		"expression": expressions["happy"],
-		"text": "That's it! Let's [tornado freq=3.0][rainbow val=1.0]GOOOOOO!!![/rainbow][/tornado]",
-		"character": bodies["sophia"]
-	}
-]
-
+@export var dialogue_items: Array[DialogueItem] = []:
+	set = set_dialogue_items
+	
 @onready var rich_text_label: RichTextLabel = %RichTextLabel
 @onready var audio_stream_player: AudioStreamPlayer = %AudioStreamPlayer
 @onready var body: TextureRect = %Body
@@ -56,44 +13,46 @@ var dialogue_items: Array[Dictionary] = [
 @onready var action_buttons_v_box_container: VBoxContainer = %ActionButtonsVBoxContainer
 
 
-func create_buttons(choices_data: Dictionary) -> void:
+func create_buttons(choices_data: Array[DialogueChoice]) -> void:
 	for button in action_buttons_v_box_container.get_children():
 		button.queue_free()
-	for choice_text in choices_data:
+	for choice in choices_data:
 		var button := Button.new()
 		action_buttons_v_box_container.add_child(button)
-		button.text = choice_text
-		var target_line_idx: int = choices_data[choice_text]
-		if target_line_idx == -1:
+		button.text = choice.text
+		if choice.is_quit == true:
 			button.pressed.connect(get_tree().quit)
 		else:
+			var target_line_idx := choice.target_line_idx
 			button.pressed.connect(show_text.bind(target_line_idx))
 
 
 func _ready() -> void:
-	create_buttons({
-		"yes": 1, 
-		"no": 2,
-	})
+	if Engine.is_editor_hint():
+		return
 	show_text(0)
 
 func show_text(current_item_index:int) -> void:
 	var current_item := dialogue_items[current_item_index]
-	rich_text_label.text = current_item["text"]
-	expression.texture = current_item["expression"]
-	body.texture = current_item["character"]
+	rich_text_label.text = current_item.text
+	expression.texture = current_item.expression
+	body.texture = current_item.character
+	create_buttons(current_item.choices)
 	rich_text_label.visible_ratio = 0.0
 	var tween := create_tween()
 	var text_appearing_duration: float = current_item["text"].length() / 30.0
 	tween.tween_property(rich_text_label, "visible_ratio", 1.0, text_appearing_duration)
 	var sound_max_offset := audio_stream_player.stream.get_length() - text_appearing_duration
 	var sound_start_position := randf() * sound_max_offset
-
 	audio_stream_player.play(sound_start_position)
 	tween.finished.connect(audio_stream_player.stop)
-
 	slide_in()
-
+	for button: Button in action_buttons_v_box_container.get_children():
+		button.disabled = true
+	tween.finished.connect(func() -> void:
+		for button: Button in action_buttons_v_box_container.get_children():
+			button.disabled = false
+	)
 
 func slide_in() -> void:
 	var slide_tween := create_tween()
@@ -102,3 +61,17 @@ func slide_in() -> void:
 	slide_tween.tween_property(body, "position:x", 0, 0.3)
 	body.modulate.a = 0
 	slide_tween.parallel().tween_property(body, "modulate:a", 1, 0.2)
+
+
+func set_dialogue_items(new_dialogue_items: Array[DialogueItem]) -> void:
+	for index in new_dialogue_items.size():
+		if new_dialogue_items[index] == null:
+			new_dialogue_items[index] = DialogueItem.new()
+	dialogue_items = new_dialogue_items
+	update_configuration_warnings()
+
+
+func _get_configuration_warnings() -> PackedStringArray:
+	if dialogue_items.is_empty():
+		return ["You need at least one dialogue item for the dialogue system to work."]
+	return []
